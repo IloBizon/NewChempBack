@@ -11,7 +11,7 @@ from .models import (
 class CustomUserAdmin(UserAdmin):
     list_display = ('email', 'username', 'blood_group', 'is_staff')
     fieldsets = UserAdmin.fieldsets + (
-        ('Medical Info', {'fields': ('disease', 'height', 'weight', 'blood_group', 'rh_factor', 'login_attempts')}),
+        ('Medical Info', {'fields': ('disease', 'height', 'weight', 'blood_group', 'rh_factor', 'login_attempts', "is_doctor")}),
     )
     add_fieldsets = UserAdmin.add_fieldsets + (
         ('Medical Info', {'fields': ('email', 'disease', 'height', 'weight', 'blood_group', 'rh_factor')}),

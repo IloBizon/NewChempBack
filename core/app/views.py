@@ -1,11 +1,12 @@
 from django.contrib.auth import authenticate
 from django.shortcuts import render
+from rest_framework import generics
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
 from .models import CustomUser, HealthDiary, HealthStatistics, DoctorConsultation, DrugPrescription
-from .permissions import IsDoctorOrOwner
+from .permissions import IsDoctorOrOwner, IsDoctor
 from .serializers import UserRegisterSerializer, UserLoginSer, UserProfileSerializer, HealthDiarySerializer, \
     HealthStatisticsSerializer, DoctorConsultationSerializer, DrugPrescriptionSerializer
 from rest_framework.authtoken.models import Token
@@ -73,6 +74,7 @@ class BaseMedicalViewSet(ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         if user.is_doctor:
+            print(123123)
             patient_id = self.request.query_params.get('patient_id')
             if patient_id:
                 return self.queryset.filter(user_id=patient_id)
@@ -102,4 +104,15 @@ class DoctorConsultationViewSet(BaseMedicalViewSet):
     serializer_class = DoctorConsultationSerializer
 
 
+class UserListView(generics.ListAPIView):
+    permission_classes = [IsDoctor]
+    serializer_class = UserProfileSerializer
 
+    def get_queryset(self):
+        if self.request.user.is_doctor:
+            queryset = CustomUser.objects.filter(is_doctor=False)
+            name = self.request.query_param.get('name')
+            if name:
+                queryset = queryset.filter(username__icontains=name)
+            return queryset
+        return CustomUser.objects.filter(id=self.request.user.id)

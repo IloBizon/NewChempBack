@@ -23,7 +23,7 @@ class Disease(models.Model):
     mkb = models.CharField(max_length=128)
 class CustomUser(AbstractUser):
     email = models.EmailField(unique=True)
-    password = models.CharField(max_length=12, validators=[validate_pass])
+    password = models.CharField(max_length=128, validators=[validate_pass])
     login_attempts = models.SmallIntegerField(default=0)
     disease = models.ForeignKey(Disease, on_delete=models.SET_NULL, null=True)
     height = models.IntegerField(validators=[validate_height], default=0)
