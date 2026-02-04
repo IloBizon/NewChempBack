@@ -8,6 +8,7 @@ router.register(viewset=HealthDiaryViewSet, prefix="health-diary")
 router.register(viewset=HealthStatisticsViewSet, prefix="health-statistics")
 router.register(viewset=DrugPrescriptionViewSet, prefix="drug-prescription")
 router.register(viewset=DoctorConsultationViewSet, prefix="consultation")
+router.register(r"diseases", DiseaseViewSet, basename="diseases")
 
 urlpatterns = [
     path("register", RegisterView.as_view()),

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import CustomUser, DoctorConsultation, HealthDiary, DrugPrescription, Drug, HealthStatistics
+from .models import CustomUser, DoctorConsultation, HealthDiary, DrugPrescription, Drug, HealthStatistics, Disease
 
 
 class UserRegisterSerializer(serializers.ModelSerializer):
@@ -53,11 +53,21 @@ class DrugPrescriptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = DrugPrescription
         fields = "__all__"
+        extra_kwargs = {
+            "user": {
+                "read_only": True
+            }
+        }
 
 class HealthStatisticsSerializer(serializers.ModelSerializer):
     class Meta:
         model = HealthStatistics
         fields = "__all__"
+        extra_kwargs = {
+            "user": {
+                "read_only": True
+            }
+        }
 
 class UserProfileSerializer(serializers.ModelSerializer):
     doctorconsultation_set = DoctorConsultationSerializer(many=True)
@@ -70,3 +80,13 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "email", "disease", "height", "weight", "blood_group",
             "rh_factor", "doctorconsultation_set", "healthdiary_set", "drugprescription_set", "healthstatistics_set"
         )
+
+class DiseaseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Disease
+        fields = "__all__"
+        extra_kwargs = {
+            "user": {
+                "read_only": True
+            }
+        }

@@ -4,116 +4,116 @@ import random
 from datetime import timedelta
 from django.utils import timezone
 
-# Настройка Django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
 django.setup()
 
-from app.models import (
-    Disease, CustomUser, Doctor, LabStatistics,
-    HealthStatistics, Drug, DrugPrescription,
-    HealthDiary, DoctorConsultation
-)
+from app.models import Disease, CustomUser, Doctor, HealthStatistics, Drug, DrugPrescription, HealthDiary, \
+    DoctorConsultation
 
 
-def generate_data():
-    print("🚀 Запуск генерации расширенного набора данных...")
+def run():
+    print("--- ОЧИСТКА БАЗЫ ДАННЫХ ---")
+    HealthStatistics.objects.all().delete()
+    HealthDiary.objects.all().delete()
+    DrugPrescription.objects.all().delete()
+    DoctorConsultation.objects.all().delete()
+    # Удаляем старых тестовых юзеров, чтобы не было конфликтов UNIQUE
+    CustomUser.objects.filter(email__in=["main@mail.ru", "patient2@mail.ru", "patient3@mail.ru"]).delete()
 
-    # 1. Болезни (МКБ-10)
-    diseases_data = [
-        ("Сахарный диабет 2 типа", "E11"),
-        ("Гипертоническая болезнь", "I10"),
-        ("Бронхиальная астма", "J45"),
-        ("Гастрит", "K29")
+    print("--- ГЕНЕРАЦИЯ СПРАВОЧНИКОВ ---")
+    d_cardio, _ = Disease.objects.get_or_create(name="Кардиология (Гипертензия)", mkb="I10")
+    d_endo, _ = Disease.objects.get_or_create(name="Эндокринология (Диабет)", mkb="E11")
+
+    doc1, _ = Doctor.objects.get_or_create(name="Терапевт Сидоров", specialization="Общая практика")
+    doc2, _ = Doctor.objects.get_or_create(name="Кардиолог Петров", specialization="Кардиология")
+
+    drug_met, _ = Drug.objects.get_or_create(title="Метформин", dose=500)
+    drug_lis, _ = Drug.objects.get_or_create(title="Лизиноприл", dose=10)
+    drug_asp, _ = Drug.objects.get_or_create(title="Аспирин", dose=100)
+    drugs = [drug_met, drug_lis, drug_asp]
+
+    users_info = [
+        {"email": "main@mail.ru", "disease": d_cardio, "trend": "stable"},
+        {"email": "patient2@mail.ru", "disease": d_endo, "trend": "bad"},
+        {"email": "patient3@mail.ru", "disease": d_cardio, "trend": "random"},
     ]
-    diseases = [Disease.objects.get_or_create(name=n, mkb=m)[0] for n, m in diseases_data]
 
-    # 2. Врачи
-    doctors_list = [
-        ("Доктор Хаус", "Диагност"),
-        ("Степанов И.И.", "Кардиолог"),
-        ("Петрова А.В.", "Эндокринолог")
-    ]
-    created_doctors = []
-    for name, spec in doctors_list:
-        doc, _ = Doctor.objects.get_or_create(name=name, specialization=spec)
-        created_doctors.append(doc)
+    for info in users_info:
+        # Уникальный username на основе части email
+        u_name = info["email"].split('@')[0]
 
-    # 3. Пользователи (Врач-аккаунт и 3 Пациента)
-    # Врач
-    if not CustomUser.objects.filter(email="doc_main@med.ru").exists():
-        CustomUser.objects.create_user(
-            email="doc_main@med.ru", username="main_doctor",
-            password="DocPassword123!", is_doctor=True, blood_group="AB"
+        user = CustomUser.objects.create_user(
+            email=info["email"],
+            username=u_name,
+            password="Qwerty123!!!",
+            disease=info["disease"],
+            height=random.randint(165, 185),
+            weight=random.randint(70, 95),
+            blood_group="O",
+            rh_factor=True,
+            is_doctor=False
         )
 
-    # Пациенты
-    patients = []
-    patient_names = [
-        ("ivan@mail.ru", "ivan_ivanov", diseases[1]),
-        ("anna@mail.ru", "anna_smith", diseases[0]),
-        ("sergey@mail.ru", "sergey_p", diseases[2])
-    ]
+        print(f"Генерация истории для {user.email}...")
 
-    for email, uname, dis in patient_names:
-        user, created = CustomUser.objects.get_or_create(
-            email=email,
-            defaults={
-                "username": uname, "disease": dis, "height": random.randint(160, 190),
-                "weight": random.randint(60, 100), "blood_group": random.choice(["A", "B", "O"]),
-                "rh_factor": random.choice([True, False])
-            }
-        )
-        if created:
-            user.set_password("Patient123!")
-            user.save()
-        patients.append(user)
+        now = timezone.now()
+        # Генерируем данные за 20 дней для графиков
+        for i in range(20):
+            day = now - timedelta(days=i)
 
-    # 4. Лекарства
-    drugs_data = ["Метформин", "Лизиноприл", "Сальбутамол", "Омепразол"]
-    drugs = [Drug.objects.get_or_create(title=t, dose=random.choice([5, 10, 500]))[0] for t in drugs_data]
+            # Логика трендов для графиков
+            if info["trend"] == "stable":
+                sys = random.randint(118, 124)
+                glu = random.randint(4, 5)
+            elif info["trend"] == "bad":
+                sys = 120 + (20 - i)  # Рост к текущей дате
+                glu = 5 + ((20 - i) / 4)
+            else:
+                sys = random.randint(110, 160)
+                glu = random.randint(3, 10)
 
-    # 5. Цикл генерации истории для каждого пациента (за 14 дней)
-    for p in patients:
-        print(f"   Заполнение данных для: {p.username}...")
-
-        for i in range(14):
-            # Статистика здоровья (каждый день)
-            HealthStatistics.objects.create(
-                user=p,
-                glucose=random.randint(4, 9),
-                systolic_pressure=random.randint(110, 150),
-                diastolic_pressure=random.randint(70, 95),
+            stat = HealthStatistics.objects.create(
+                user=user,
+                glucose=int(glu),
+                systolic_pressure=sys,
+                diastolic_pressure=random.randint(70, 90),
                 pulse=random.randint(60, 85),
-                text="Замер произведен в покое"
+                weight=user.weight + random.randint(-1, 1),
+                text="Плановый замер"
             )
+            # Принудительно ставим дату в прошлое (auto_now_add обходим через update)
+            HealthStatistics.objects.filter(id=stat.id).update(date=day)
 
-            # Дневник (через день)
+            # Записи в дневник каждые 2 дня
             if i % 2 == 0:
-                HealthDiary.objects.create(
-                    user=p, mark=random.randint(3, 5),
-                    text=random.choice(["Слабость", "Хорошее состояние", "Головная боль"]),
-                    measures_taken=random.choice(["Отдых", "Прием лекарств", "Нет"])
+                diary = HealthDiary.objects.create(
+                    user=user,
+                    mark=random.randint(4, 9),
+                    text=f"Симптомы: {random.choice(['слабость', 'норма', 'головная боль'])}",
+                    measures_taken="Соблюдение режима"
                 )
+                HealthDiary.objects.filter(id=diary.id).update(date=day)
 
-        # Анализы (2 записи)
-        for _ in range(2):
-            LabStatistics.objects.create(
-                user=p, rbc=random.randint(4, 5), wbc=random.randint(4, 9),
-                plt=random.randint(150, 400), hgb=random.randint(120, 160)
-            )
+        # Назначения (по 3 на каждого)
+        for d in drugs:
+            # Создаем несколько записей для статистики приверженности
+            for _ in range(3):
+                DrugPrescription.objects.create(
+                    user=user,
+                    drug=d,
+                    was_taken=random.choice([True, True, False])  # 66% успеха
+                )
 
         # Консультации
         DoctorConsultation.objects.create(
-            user=p, doctor=random.choice(created_doctors),
-            description="Плановый осмотр, коррекция терапии."
+            user=user,
+            doctor=doc1,
+            description="Рекомендована диета и регулярные замеры давления."
         )
 
-        # Назначения (по 3 лекарства каждому)
-        for d in random.sample(drugs, 2):
-            DrugPrescription.objects.create(user=p, drug=d, was_taken=random.choice([True, False]))
-
-    print("\n✅ Успех: Создано 3 пациента, 3 врача и более 100 медицинских записей.")
+    print("\n--- ГЕНЕРАЦИЯ ЗАВЕРШЕНА ---")
+    print("Пароль для всех: Qwerty123!!!")
 
 
 if __name__ == "__main__":
-    generate_data()
+    run()

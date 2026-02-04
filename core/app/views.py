@@ -1,14 +1,15 @@
 from django.contrib.auth import authenticate
 from django.shortcuts import render
 from rest_framework import generics
+from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 from rest_framework.views import APIView
-from rest_framework.viewsets import ModelViewSet
+from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
-from .models import CustomUser, HealthDiary, HealthStatistics, DoctorConsultation, DrugPrescription
+from .models import CustomUser, HealthDiary, HealthStatistics, DoctorConsultation, DrugPrescription, Disease
 from .permissions import IsDoctorOrOwner, IsDoctor
 from .serializers import UserRegisterSerializer, UserLoginSer, UserProfileSerializer, HealthDiarySerializer, \
-    HealthStatisticsSerializer, DoctorConsultationSerializer, DrugPrescriptionSerializer
+    HealthStatisticsSerializer, DoctorConsultationSerializer, DrugPrescriptionSerializer, DiseaseSerializer
 from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -168,3 +169,9 @@ class UserListView(generics.ListAPIView):
                 queryset = queryset.filter(username__icontains=name)
             return queryset
         return CustomUser.objects.filter(id=self.request.user.id)
+
+
+class DiseaseViewSet(ReadOnlyModelViewSet):
+    queryset = Disease.objects.all()
+    serializer_class = DiseaseSerializer
+    permission_class = [AllowAny]
