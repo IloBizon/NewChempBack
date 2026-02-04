@@ -30,6 +30,7 @@ class CustomUser(AbstractUser):
     weight = models.IntegerField(validators=[validate_weight], default=0)
     blood_group = models.CharField(max_length=2)
     rh_factor = models.BooleanField(default=False)
+    is_doctor = models.BooleanField(default=False)
 
     REQUIRED_FIELDS = ["username"]
     USERNAME_FIELD = "email"
@@ -56,13 +57,15 @@ class HealthStatistics(models.Model):
     text = models.CharField()
     date = models.DateTimeField(auto_now_add=True)
 
+class Drug(models.Model):
+    title = models.CharField(max_length=123)
+    dose = models.IntegerField()
 
 class DrugPrescription(models.Model):
     "Назначения"
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     time = models.DateTimeField(auto_now_add=True)
-    drug_title = models.CharField(max_length=128)
-    drug_dose = models.IntegerField()
+    drug = models.ForeignKey(Drug, on_delete=models.SET_NULL, null=True)
     was_taken = models.BooleanField()
 
 class HealthDiary(models.Model):
