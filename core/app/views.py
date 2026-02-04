@@ -1,5 +1,6 @@
 from django.contrib.auth import authenticate
 from django.shortcuts import render
+from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework.views import APIView
 from .serializers import UserRegisterSerializer, UserLoginSer
 from rest_framework.authtoken.models import Token
@@ -15,13 +16,14 @@ class RegisterView(APIView):
         ser.is_valid(raise_exception=True)
         user = ser.save()
 
-        token, _ = Token.objects.get_or_create(user=user)
+        token = AccessToken.for_user(user=user)
+        print(token)
 
         ser = UserRegisterSerializer(instance=user)
         return Response(
             data={
-                "data":ser.data,
-                "token": token.key
+                "data": ser.data,
+                "token": str(token)
             }
         )
 
@@ -36,11 +38,11 @@ class LoginView(APIView):
             return Response(
                 data="Invalid credentials"
             )
-        token, _ = Token.objects.get_or_create(user=user)
+        token = AccessToken.for_user(user=user)
         ser = UserRegisterSerializer(instance=user)
         return Response(
             data={
                 "data": ser.data,
-                "token": token.key
+                "token": str(token)
             }
         )

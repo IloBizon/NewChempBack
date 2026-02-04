@@ -17,30 +17,49 @@ def validate_weight(val):
     if val < 30 or val > 300:
         raise ValidationError("Weight error")
 
+
+class Disease(models.Model):
+    name = models.CharField(max_length=128)
+    mkb = models.CharField(max_length=128)
 class CustomUser(AbstractUser):
     email = models.EmailField(unique=True)
     password = models.CharField(max_length=12, validators=[validate_pass])
     login_attempts = models.SmallIntegerField(default=0)
-    disease = models.CharField(max_length=123)
+    disease = models.ForeignKey(Disease, on_delete=models.SET_NULL, null=True)
     height = models.IntegerField(validators=[validate_height], default=0)
     weight = models.IntegerField(validators=[validate_weight], default=0)
+    blood_group = models.CharField(max_length=2)
+    rh_factor = models.BooleanField(default=False)
 
-    REQUIRED_FIELDS = []
+    REQUIRED_FIELDS = ["username"]
     USERNAME_FIELD = "email"
 
 
+class Doctor(models.Model):
+    name = models.CharField(max_length=128)
+    specialization = models.CharField(max_length=128)
+
+class LabStatistics(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    rbc = models.IntegerField()
+    wbc = models.IntegerField()
+    plt = models.IntegerField()
+    hgb = models.IntegerField()
+    date = models.DateTimeField(auto_now_add=True)
+
 class HealthStatistics(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     glucose = models.IntegerField()
     systolic_pressure = models.IntegerField()
     diastolic_pressure=models.IntegerField()
     pulse = models.IntegerField()
-    weight = models.IntegerField()
     text = models.CharField()
     date = models.DateTimeField(auto_now_add=True)
 
 
 class DrugPrescription(models.Model):
     "Назначения"
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     time = models.DateTimeField(auto_now_add=True)
     drug_title = models.CharField(max_length=128)
     drug_dose = models.IntegerField()
@@ -48,7 +67,13 @@ class DrugPrescription(models.Model):
 
 class HealthDiary(models.Model):
     "Дневник самочуствия"
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     mark = models.IntegerField()
     date = models.DateTimeField(auto_now_add=True)
     text = models.CharField(max_length=128)
     measures_taken = models.CharField(max_length=128)
+
+class DoctorConsultation(models.Model):
+    doctor = models.ForeignKey(Doctor, on_delete=models.SET_NULL, null=True)
+    user = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True)
+    description = models.CharField(max_length=256)
