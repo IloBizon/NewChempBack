@@ -5,6 +5,7 @@ from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
 from .models import CustomUser, HealthDiary, HealthStatistics, DoctorConsultation, DrugPrescription
+from .permissions import IsDoctorOrOwner
 from .serializers import UserRegisterSerializer, UserLoginSer, UserProfileSerializer, HealthDiarySerializer, \
     HealthStatisticsSerializer, DoctorConsultationSerializer, DrugPrescriptionSerializer
 from rest_framework.authtoken.models import Token
@@ -66,54 +67,39 @@ class UserDetailProfileView(APIView):
         serializer = UserProfileSerializer(instance=user)
         return Response(serializer.data)
 
-class HealthDiaryViewSet(ModelViewSet):
+class BaseMedicalViewSet(ModelViewSet):
+    permission_classes = [IsDoctorOrOwner]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_doctor:
+            patient_id = self.request.query_params.get('patient_id')
+            if patient_id:
+                return self.queryset.filter(user_id=patient_id)
+            return self.queryset.all()
+        return self.queryset.filter(user=user)
+
+    def perform_create(self, serializer):
+        if self.request.user.is_doctor:
+            serializer.save()
+        else:
+            serializer.save(user=self.request.user)
+
+class HealthDiaryViewSet(BaseMedicalViewSet):
     queryset = HealthDiary.objects.all()
     serializer_class = HealthDiarySerializer
 
-    def get_queryset(self):
-        return HealthDiary.objects.filter(
-            user=self.request.user
-        )
-
-    def perform_create(self, serializer):
-        return serializer.save(user=self.request.user)
-
-
-class HealthStatisticsViewSet(ModelViewSet):
+class HealthStatisticsViewSet(BaseMedicalViewSet):
     queryset = HealthStatistics.objects.all()
     serializer_class = HealthStatisticsSerializer
 
-    def get_queryset(self):
-        return HealthStatistics.objects.filter(
-            user=self.request.user
-        )
-
-    def perform_create(self, serializer):
-        return serializer.save(user=self.request.user)
-
-
-class DoctorConsultationViewSet(ModelViewSet):
-    queryset = DoctorConsultation.objects.all()
-    serializer_class = DoctorConsultationSerializer
-
-    def get_queryset(self):
-        return DoctorConsultation.objects.filter(
-            user=self.request.user
-        )
-
-    def perform_create(self, serializer):
-        return serializer.save(user=self.request.user)
-
-
-class DrugPrescriptionViewSet(ModelViewSet):
+class DrugPrescriptionViewSet(BaseMedicalViewSet):
     queryset = DrugPrescription.objects.all()
     serializer_class = DrugPrescriptionSerializer
 
-    def get_queryset(self):
-        return DrugPrescription.objects.filter(
-            user=self.request.user
-        )
+class DoctorConsultationViewSet(BaseMedicalViewSet):
+    queryset = DoctorConsultation.objects.all()
+    serializer_class = DoctorConsultationSerializer
 
-    def perform_create(self, serializer):
-        return serializer.save(user=self.request.user)
+
 
