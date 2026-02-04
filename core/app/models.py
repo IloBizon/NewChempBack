@@ -31,6 +31,7 @@ class CustomUser(AbstractUser):
     blood_group = models.CharField(max_length=2)
     rh_factor = models.BooleanField(default=False)
     is_doctor = models.BooleanField(default=False)
+    last_failed_login = models.DateTimeField(null=True, blank=True)
 
     REQUIRED_FIELDS = ["username"]
     USERNAME_FIELD = "email"
@@ -55,6 +56,7 @@ class HealthStatistics(models.Model):
     diastolic_pressure=models.IntegerField()
     pulse = models.IntegerField()
     text = models.CharField()
+    weight = models.IntegerField()
     date = models.DateTimeField(auto_now_add=True)
 
 class Drug(models.Model):
