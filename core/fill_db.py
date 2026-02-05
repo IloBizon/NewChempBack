@@ -12,7 +12,11 @@ from app.models import Disease, CustomUser, Doctor, HealthStatistics, Drug, Drug
 
 
 def run():
-    print("--- ОЧИСТКА БАЗЫ ДАННЫХ ---")
+    print("--- ОЧИСТКА БА"
+          ""
+          ""
+          ""
+          " м ЗЫ ДАННЫХ ---")
     HealthStatistics.objects.all().delete()
     HealthDiary.objects.all().delete()
     DrugPrescription.objects.all().delete()
