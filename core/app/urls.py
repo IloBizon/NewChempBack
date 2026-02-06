@@ -13,6 +13,7 @@ router.register(r"diseases", DiseaseViewSet, basename="diseases")
 urlpatterns = [
     path("register", RegisterView.as_view()),
     path("login", LoginView.as_view()),
+    path("users/", UserListView.as_view()),
     path("users/<int:pk>", UserDetailProfileView.as_view()),
     path("", include(router.urls))
 ]

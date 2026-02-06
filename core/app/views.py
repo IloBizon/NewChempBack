@@ -164,7 +164,7 @@ class UserListView(generics.ListAPIView):
     def get_queryset(self):
         if self.request.user.is_doctor:
             queryset = CustomUser.objects.filter(is_doctor=False)
-            name = self.request.query_param.get('name')
+            name = self.request.query_params.get('name')
             if name:
                 queryset = queryset.filter(username__icontains=name)
             return queryset

@@ -77,7 +77,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = (
-            "email", "disease", "height", "weight", "blood_group",
+            "id", "email", "disease", "height", "weight", "blood_group",
             "rh_factor", "doctorconsultation_set", "healthdiary_set", "drugprescription_set", "healthstatistics_set"
         )
 
